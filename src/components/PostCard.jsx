@@ -2,8 +2,10 @@ import { AiOutlineHeart,AiTwotoneHeart } from 'react-icons/ai';
 import { FaRegCommentAlt,FaUserMinus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import { FiEdit } from "react-icons/fi";
 
-const PostCard = ({ post,onDelete,onLike }) => {
+
+const PostCard = ({ post,onDelete,onLike,onUpdate }) => {
     const { user } = useAuthStore(state=>state);
     const checkLiked = post.likes.find(likePost=>likePost.user_id === user._id && likePost.post_id === post._id);
 
@@ -44,11 +46,18 @@ const PostCard = ({ post,onDelete,onLike }) => {
                     {post?.likes?.length} Likes
                 </button>
                 )}
-                <Link to={`/post/${post._id}`}>
+                  <Link to={`/post/${post._id}`}>
                 <button className='flex items-center text-gray-500 text-md gap-x-2'>
                     <FaRegCommentAlt className='text-[16px]'/>
                 </button>
                 </Link>
+                {user?._id === post?.user_id?._id && (
+                     <button onClick={() => onUpdate(post)} className='text-md text-gray-500 flex items-center gap-x-3 font-normal cursor-pointer'>
+                        <FiEdit className="text-md"/>
+
+                     </button>
+                )}
+              
             </div>
         </div>
     )

@@ -70,7 +70,7 @@ const Login = () => {
     try {
       const { data } = await APIAuth.post(`/login`, loginForm);
       if(data.statusCode === 200) {
-          localStorage.setItem("user" , JSON.stringify(data.token));
+          localStorage.setItem("chattera-token" , JSON.stringify(data.token));
            return setupToken(data.token);
       }
 

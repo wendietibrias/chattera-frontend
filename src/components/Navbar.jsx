@@ -13,7 +13,7 @@ const Navbar = () => {
   const { data } = useProfileStore(state=>state);
 
    const logoutButtonHandler = () => {
-     localStorage.setItem('user' , JSON.stringify(null));
+     localStorage.setItem('chattera-token' , JSON.stringify(null));
      logoutHandler();
    }
 

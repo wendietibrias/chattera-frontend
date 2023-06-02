@@ -12,8 +12,12 @@ const Profilepage = () => {
     const { id } = useParams();
     const { data,setupProfile } = useProfileStore(state=>state);
 
+    const [openUpdatePostModal,setOpenUpdatePostModal] = useState(false);
     const [openUpdateProfileModal,setOpenUpdateProfileModal] = useState(false);
     const [loading,setLoading] = useState(false);
+
+    const [imagePreview,setImagePreview] = useState("");
+    const [post,setPost] = useState(null);
     const [posts,setPosts] = useState([]);
     const [updateForm,setUpdateForm] = useState({
         username:"",
@@ -127,6 +131,59 @@ const Profilepage = () => {
 
     const changeHandler = (e) => setUpdateForm({...updateForm,[e.target.name]:e.target.value});
 
+    const openUpdatePostModalHandler = (post) => {
+         setPost(post);
+         setOpenUpdatePostModal(true);
+    }
+
+    const imagePostHandler = (e) => {
+         const file = e.target.files[0]
+         const reader = new FileReader();
+
+         reader.onloadend = function() {
+            const result = this.result;
+            setImagePreview(result);
+            setPost({
+                ...post,
+                image:file 
+            });
+         }
+
+         reader.readAsDataURL(file);
+    }
+
+    const updatePostHandler = async (e) => {
+        e.preventDefault();
+
+        setAlert({
+            open:true, 
+            message:"Updating...",
+            variant:'bg-blue-50',
+            textVariant:'text-blue-400'
+          });
+
+        try {
+            const formData = new FormData();
+            formData.append('caption' , post.caption);
+            formData.append('image' , post.image);
+
+            const { data } = await APIPost.post(`/update/${post._id}`, formData);
+
+            if(data.statusCode === 200) {
+                setAlert({
+                    open:true,
+                    message:"Success update post",
+                    variant:"bg-green-50",
+                    textVariant:"text-green-500"
+                });
+                 fetchUserPosts();
+            }
+             
+        } catch(err) {
+            return err;
+        }
+    }
+
     useEffect(() => {
         fetchUserPosts();
         if(data) {
@@ -138,12 +195,26 @@ const Profilepage = () => {
             });
         }
 
+        if(alert.open === true) {
+            setTimeout(() => {
+                setAlert({
+                    open:false,
+                    message:"",
+                    variant:"",
+                    textVariant:""
+                });
+                setOpenUpdatePostModal(false);
+            } ,2000)
+        }
 
-    },[data]);
+
+    },[data,alert.open]);
 
     return (
         <div className="w-full bg-gray-100 min-h-screen">
             <Navbar/>
+
+            {/* Modal */}
             {openUpdateProfileModal && (
                 <div onClick={closeModalHandler} style={{
                     backgroundColor:"rgba(10,10,10,0.4)",
@@ -165,6 +236,33 @@ const Profilepage = () => {
                     </div>
                 </div>
             )}
+ 
+            {openUpdatePostModal && (
+                 <div onClick={closeModalHandler} style={{
+                    backgroundColor:"rgba(10,10,10,0.4)",
+                }} className="fixed top-0 left-0 w-full min-h-screen flex items-center lg:flex-row flex-col justify-center">
+                    <div className='bg-white rounded-lg py-4 px-5 w-[450px] shadow shadow-gray-800'>
+                        {alert.open && (
+                            <div className='mb-4'>
+                                <Alert alert={alert} setAlert={setAlert} />
+                            </div>
+                        )}
+                        <h4 className='text-center font-bold text-xl'>Update Profile</h4>
+                        <form onSubmit={updatePostHandler} className='w-full mt-5 flex flex-col gap-y-2'>
+                            <input onChange={(e) => setPost({...post,caption:e.target.value})} value={post.caption} type="text" name="caption" placeholder='Caption' className='text-[14px] outline-none text-gray-500 w-full border border-gray-300 py-2 px-2 rounded-md'/>
+                            {imagePreview === "" ? (
+                            <img src={`${process.env.REACT_APP_BASE_IMAGE_POST_URI}/${post?.image}`} alt={`${post.caption}`} className="w-full rounded-sm h-[200px]"/>
+                            ) : (
+                                <img src={imagePreview} alt={post.caption} className="w-full rounded-sm h-[200px]"/>
+                            )}
+                            <input onChange={imagePostHandler} type="file" name="image" className="mt-3"/>
+                            <button type="submit" className='w-full bg-blue-500 text-[15px] text-white font-semibold rounded-full py-2 mt-5'>Update</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal */}
             <section className='w-full py-7 px-12 flex items-start gap-x-5'>
             <div className='w-full lg:w-[27%]'>
                  <WrapperProfile setModal={setOpenUpdateProfileModal} updateAvatar={updateUserAvatar} page="profilepage"/>
@@ -172,7 +270,7 @@ const Profilepage = () => {
             <div className='w-full lg:w-[44%]'>
                 {Array.isArray(posts) && posts.length > 0 ? (
                     <div className='w-full flex flex-col gap-y-3'>
-                    {posts?.map((post,idx) => <PostCard onDelete={deleteUserPost} key={idx} post={post}/>)}
+                    {posts?.map((post,idx) => <PostCard onDelete={deleteUserPost} onUpdate={openUpdatePostModalHandler} key={idx} post={post}/>)}
                     </div>
                 ) : (
                     <div className="w-full flex justify-center flex-col items-center">

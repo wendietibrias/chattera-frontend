@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import jwtDecode from 'jwt-decode';
 
-const user = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("chattera-token"));
 
 const useAuthStore = create((set) => ({
      token:user,
